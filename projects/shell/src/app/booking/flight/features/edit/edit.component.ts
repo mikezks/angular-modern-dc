@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { injectBookingFeature } from '../../../+state/booking.state';
 
 @Component({
   selector: 'app-flight-edit',
@@ -18,9 +17,9 @@ export class EditComponent {
     date: [new Date().toISOString()],
     delayed: [false]
   });
-  #bookingFeature = injectBookingFeature();
+  // #bookingFeature = injectBookingFeature();
 
   save(): void {
-    this.#bookingFeature.save(this.editForm.getRawValue());
+    // this.#bookingFeature.save(this.editForm.getRawValue());
   }
 }
