@@ -6,7 +6,7 @@
   <div class="card-body">
     <app-flight-filter
       [filter]="filter"
-      (searchTrigger)="search($event)">
+      (searchTrigger)="bookingFeature.search($event)">
 
     </app-flight-filter>
   </div>
@@ -14,7 +14,7 @@
 
 <div class="row">
   <div
-    *ngFor="let flight of flights"
+    *ngFor="let flight of bookingFeature.flights$ | async"
     class="col-xs-12 col-sm-6 col-md-4"
   >
     <app-flight-card

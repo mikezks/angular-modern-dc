@@ -1,5 +1,7 @@
 import { Component, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { injectBookingFeature } from '../../../+state/booking.state';
 
 @Component({
   selector: 'app-flight-edit',
@@ -17,9 +19,17 @@ export class EditComponent {
     date: [new Date().toISOString()],
     delayed: [false]
   });
-  // #bookingFeature = injectBookingFeature();
+  #bookingFeature = injectBookingFeature();
+
+  constructor() {
+    this.#bookingFeature.activeFlight$.pipe(
+      takeUntilDestroyed()
+    ).subscribe(
+      flight => this.editForm.patchValue(flight)
+    );
+  }
 
   save(): void {
-    // this.#bookingFeature.save(this.editForm.getRawValue());
+    this.#bookingFeature.save(this.editForm.getRawValue());
   }
 }

@@ -1,5 +1,6 @@
 import { Routes } from "@angular/router";
 import { provideRouterFeature } from "./+state/router.state";
+import { provideBookingFeature } from "./+state/booking.state";
 
 export const BOOKING_ROUTES: Routes = [
   {
@@ -20,6 +21,7 @@ export const BOOKING_ROUTES: Routes = [
       }
     ],
     providers: [
+      provideBookingFeature(),
       provideRouterFeature()
     ]
   }
