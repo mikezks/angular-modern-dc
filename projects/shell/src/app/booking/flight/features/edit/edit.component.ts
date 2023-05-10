@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { injectBookingFeature } from '../../../+state/booking.state';
+import { effect } from 'projects/shared-util-signals-zoneless/src/lib/angular/core';
 
 @Component({
   selector: 'app-flight-edit',
@@ -22,11 +23,9 @@ export class EditComponent {
   #bookingFeature = injectBookingFeature();
 
   constructor() {
-    this.#bookingFeature.activeFlight$.pipe(
-      takeUntilDestroyed()
-    ).subscribe(
-      flight => this.editForm.patchValue(flight)
-    );
+    effect(() => this.editForm.patchValue(
+      this.#bookingFeature.activeFlight()
+    ));
   }
 
   save(): void {

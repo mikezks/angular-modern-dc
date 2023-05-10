@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Injector, Input, Output, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ComponentStore } from '@ngrx/component-store';
 import { FlightFilter } from '../logic/model/flight-filter';
@@ -30,7 +31,7 @@ export const initialLocalState: LocalState = {
       <label for="filterSelect">Previous Filters:</label>
       <select [formControl]="selectedFilter" class="form-control" id="filterSelect">
         <option
-          *ngFor="let filter of selectFilters$ | async"
+          *ngFor="let filter of selectFilters()"
           [ngValue]="filter">
           {{filter?.from}} - {{filter?.to}}
         </option>
@@ -73,6 +74,7 @@ export class FilterComponent {
   @Output() searchTrigger = new EventEmitter<FlightFilter>();
 
   #fb = inject(FormBuilder);
+  #injector = inject(Injector);
 
   filterForm = this.#fb.nonNullable.group({
     from: ['', [Validators.required]],
@@ -109,16 +111,16 @@ export class FilterComponent {
    * Selector
    */
 
-  selectFilters$ = this.localStore.select(
+  selectFilters = this.localStore.selectSignal(
     // Selectors
 
     // Projector
     state => state.filters
   );
 
-  selectLatestFilters$ = this.localStore.select(
+  selectLatestFilters = this.localStore.selectSignal(
     // Selectors
-    this.selectFilters$,
+    this.selectFilters,
     // Projector
     filters => filters.slice(-1)[0]
   );
@@ -155,6 +157,9 @@ export class FilterComponent {
   constructor() {
     this.localStore.setState(initialLocalState);
     this.updateFilterForm(this.selectedFilter.valueChanges);
-    this.updateSelectedFilter(this.selectLatestFilters$);
+    this.updateSelectedFilter(toObservable(
+      this.selectLatestFilters,
+      { injector: this.#injector }
+    ));
   }
 }

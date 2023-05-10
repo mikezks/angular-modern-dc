@@ -1,5 +1,5 @@
 import { AsyncPipe, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { injectBookingFeature } from '../../../+state/booking.state';
@@ -12,21 +12,28 @@ import { FilterComponent } from "../../ui/filter.component";
   standalone: true,
   templateUrl: './search.component.html',
   imports: [
-    NgIf, NgFor, DatePipe, JsonPipe, AsyncPipe,
+    NgIf, NgFor, DatePipe, JsonPipe,
     RouterLink,
     FormsModule,
     CardComponent, FilterComponent
   ]
 })
 export class SearchComponent {
-  filter: FlightFilter = {
+  filter = signal<FlightFilter>({
     from: 'Paris',
     to: 'London',
     urgent: false
-  };
-  basket: Record<number, boolean> = {
+  });
+  basket = signal<Record<number, boolean>>({
     3: true,
     5: true,
-  };
+  });
   bookingFeature = injectBookingFeature();
+
+  updateBasket(id: number, selected: boolean): void {
+    this.basket.update(basket => ({
+      ...basket,
+      [id]: selected
+    }));
+  }
 }
