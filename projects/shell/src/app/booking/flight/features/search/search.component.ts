@@ -1,5 +1,6 @@
 import { AsyncPipe, DatePipe, JsonPipe, NgFor, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { injectBookingFeature } from '../../../+state/booking.state';
@@ -17,11 +18,15 @@ import { CardComponent } from '../../ui/card.component';
   templateUrl: './search.component.html'
 })
 export class SearchComponent {
-  from = 'Paris';
-  to = 'London';
+  from = signal('Paris');
+  to = signal('London');
   basket: Record<number, boolean> = {
     3: true,
     5: true,
   };
   bookingFeature = injectBookingFeature();
+  flights = toSignal(
+    this.bookingFeature.flights$,
+    { initialValue: [] }
+  );
 }
