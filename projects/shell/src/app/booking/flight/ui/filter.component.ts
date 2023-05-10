@@ -1,7 +1,19 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ComponentStore } from '@ngrx/component-store';
 import { FlightFilter } from '../logic/model/flight-filter';
+import { Observable, map, tap } from 'rxjs';
+
+
+export interface LocalState {
+  filters: FlightFilter[]
+}
+
+export const initialLocalState: LocalState = {
+  filters: []
+};
+
 
 @Component({
   selector: 'app-flight-filter',
@@ -10,8 +22,11 @@ import { FlightFilter } from '../logic/model/flight-filter';
     CommonModule,
     ReactiveFormsModule
   ],
+  providers: [
+    ComponentStore
+  ],
   template: `
-    <!-- <div class="form-group">
+    <div class="form-group">
       <label for="filterSelect">Previous Filters:</label>
       <select [formControl]="selectedFilter" class="form-control" id="filterSelect">
         <option
@@ -20,7 +35,7 @@ import { FlightFilter } from '../logic/model/flight-filter';
           {{filter?.from}} - {{filter?.to}}
         </option>
       </select>
-    </div> -->
+    </div>
 
     <form [formGroup]="filterForm">
       <div class="form-group">
@@ -39,7 +54,7 @@ import { FlightFilter } from '../logic/model/flight-filter';
       </div>
 
       <div class="form-group">
-        <button (click)="search()" [disabled]="!filterForm.valid"
+        <button (click)="triggerSearch()" [disabled]="!filterForm.valid"
           class="btn btn-default">
           Search
         </button>
@@ -71,7 +86,75 @@ export class FilterComponent {
     urgent: false
   }, { nonNullable: true });
 
-  search(): void {
-    this.searchTrigger.next(this.filterForm.getRawValue());
+  localStore = inject(ComponentStore<LocalState>);
+
+  /**
+   * Updater
+   */
+
+  addFilter = this.localStore.updater(
+    (state, filter: FlightFilter) => ({
+      ...state,
+      filters: [
+        ...state.filters.filter(f => !(
+          f.from === filter.from &&
+          f.to === filter.to
+        )),
+        filter
+      ]
+    })
+  );
+
+  /**
+   * Selector
+   */
+
+  selectFilters$ = this.localStore.select(
+    // Selectors
+
+    // Projector
+    state => state.filters
+  );
+
+  selectLatestFilters$ = this.localStore.select(
+    // Selectors
+    this.selectFilters$,
+    // Projector
+    filters => filters.slice(-1)[0]
+  );
+
+  /**
+   * Effect
+   */
+
+  triggerSearch = this.localStore.effect(
+    (trigger$: Observable<void>) =>
+      trigger$.pipe(
+        map(() => this.filterForm.getRawValue()),
+        tap((filter: FlightFilter) => {
+          this.addFilter(filter);
+          this.searchTrigger.next(filter);
+        })
+      )
+  );
+
+  updateFilterForm = this.localStore.effect(
+    (filter$: Observable<FlightFilter>) =>
+      filter$.pipe(
+        tap(filter => this.filterForm.patchValue(filter))
+      )
+  );
+
+  updateSelectedFilter = this.localStore.effect(
+    (filter$: Observable<FlightFilter>) =>
+      filter$.pipe(
+        tap((filter: FlightFilter) => this.selectedFilter.setValue(filter))
+      )
+  );
+
+  constructor() {
+    this.localStore.setState(initialLocalState);
+    this.updateFilterForm(this.selectedFilter.valueChanges);
+    this.updateSelectedFilter(this.selectLatestFilters$);
   }
 }
